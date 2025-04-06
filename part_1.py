@@ -41,3 +41,39 @@ def linear_activation_forward(A_prev, W, b, activation):
 
     cache = (linear_cache, activation_cache)
     return A, cache
+
+
+def l_model_forward(X, parameters, use_batchnorm):
+    caches = []
+    L = len(parameters) // 2
+    A = X # input layer A[0] = X
+    for i in range(1, L):
+        A_prev = A
+        W = parameters[f"W{i}"]
+        b = parameters[f"b{i}"]
+        A, cache = linear_activation_forward(A_prev, W, b, activation="relu")
+        if use_batchnorm:
+            A = apply_batchnorm(A)
+        caches.append(cache)
+
+    W = parameters[f"W{L}"]
+    b = parameters[f"b{L}"]
+    AL, cache = linear_activation_forward(A, W, b, activation="softmax")
+    caches.append(cache)
+
+    return AL, caches
+
+def compute_cost(AL, Y):
+    m = Y.shape[1]
+    AL = np.clip(AL, 1e-15, 1 - 1e-15) # avoid log(0)
+    summation = np.sum(np.multiply(Y, np.log(AL)))
+    cost = - (1/m) * summation
+    return cost
+
+def apply_batchnorm(A):
+    m = np.mean(A, axis=1, keepdims=True)
+    var = np.var(A, axis=1, keepdims=True)
+    epsilon = 1e-8
+    A_tag = (A - m) / np.sqrt(var + epsilon)
+    return A_tag
+
