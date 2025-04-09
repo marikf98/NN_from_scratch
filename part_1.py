@@ -6,8 +6,10 @@ def initialize_parameters(layer_dims):
     L = len(layer_dims)  # number of layers
 
     for l in range(1, L):
-        parameters[f"W{l}"] = np.random.randn(layer_dims[l], layer_dims[l-1]) * 0.01
+        # parameters[f"W{l}"] = np.random.randn(layer_dims[l], layer_dims[l-1]) * 0.01
         parameters[f"b{l}"] = np.zeros((layer_dims[l], 1))
+        #fixed the starting weights assigment to better work with relu
+        parameters[f"W{l}"] = np.random.randn(layer_dims[l], layer_dims[l-1]) * np.sqrt(2 / layer_dims[l-1])
 
     return parameters
 
