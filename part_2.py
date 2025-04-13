@@ -1,17 +1,19 @@
 import numpy as np
 
 
-def linear_backward(dZ, cache):
+def linear_backward(dZ, cache, lambd=0):
     A_prev, W, b = cache
     m = A_prev.shape[1]
 
     dW = (1 / m) * np.dot(dZ, A_prev.T)
+    if lambd > 0:
+        dW += (lambd / m) * W
     db = (1 / m) * np.sum(dZ, axis=1, keepdims=True)
     dA_prev = np.dot(W.T, dZ)
 
     return dA_prev, dW, db
 
-def linear_activation_backward(dA, cache, activation):
+def linear_activation_backward(dA, cache, activation, lambd=0):
     linear_cache, activation_cache = cache
 
     if activation == "relu":
@@ -23,7 +25,7 @@ def linear_activation_backward(dA, cache, activation):
     else:
         raise ValueError("Unsupported activation function. Use 'relu' or 'softmax'.")
 
-    dA_prev, dW, db = linear_backward(dZ, linear_cache)
+    dA_prev, dW, db = linear_backward(dZ, linear_cache, lambd=lambd)
     return dA_prev, dW, db
 
 def relu_backward(dA, activation_cache):
@@ -36,14 +38,14 @@ def relu_backward(dA, activation_cache):
 def softmax_backward(dA, activation_cache):
     return dA
 
-def l_model_backward(AL, Y, caches):
+def l_model_backward(AL, Y, caches, lambd=0):
     grads = {}
     L = len(caches)  # number of layers
 
     # Step 1: Backprop the output layer once with softmax
     dAL = AL - Y  # derivative of loss softmax
     current_cache = caches[L - 1]
-    dA_prev, dW, db = linear_activation_backward(dAL, current_cache, activation="softmax")
+    dA_prev, dW, db = linear_activation_backward(dAL, current_cache, activation="softmax", lambd=lambd)
 
     grads["dA" + str(L - 1)] = dA_prev
     grads["dW" + str(L)] = dW
@@ -53,7 +55,7 @@ def l_model_backward(AL, Y, caches):
     for l in reversed(range(L - 1)):
         current_cache = caches[l]
         dA_curr = grads["dA" + str(l + 1)]  # from previous layer
-        dA_prev, dW, db = linear_activation_backward(dA_curr, current_cache, activation="relu")
+        dA_prev, dW, db = linear_activation_backward(dA_curr, current_cache, activation="relu", lambd=lambd)
 
         grads["dA" + str(l)] = dA_prev
         grads["dW" + str(l + 1)] = dW
